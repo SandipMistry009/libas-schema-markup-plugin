@@ -1,2 +1,2 @@
-# My-Plugins
-My Custom made plugins as per the clients requirements
+# libas-schema-markup
+Adds Schema Markup for Website, BreadcrumbList, ItemList, and Products.
