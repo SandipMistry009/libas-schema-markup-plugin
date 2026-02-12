@@ -2,7 +2,7 @@
 /*
 Plugin Name: Libas Schema Markup
 Description: Adds Schema Markup for Website, BreadcrumbList, ItemList, and Products.
-Version: 1.0
+Version: 1.0.1
 Author: Sandip Mistry
 */
 
@@ -131,7 +131,11 @@ class Libas_Schema_Markup {
     private function product_schema() {
         global $product;
         if ( ! $product || ! is_a( $product, 'WC_Product' ) ) return;
-
+        $clean_price = number_format( (float) wc_get_price_to_display( $product ), 2, '.', '' );
+        $color = $product->get_attribute('pa_color');
+        $size = str_replace( ', ', ',', $product->get_attribute( 'pa_size' ) );
+        $rating_count = $product->get_rating_count();
+        $average      = $product->get_average_rating();
         ?>
         <script type="application/ld+json">
         {
@@ -145,13 +149,61 @@ class Libas_Schema_Markup {
             "@type": "Brand",
             "name": "The Libas Collection"
           },
+          "color": "<?php echo $color; ?>", 
+          "size": "<?php echo $size; ?>",
+          "material": "Silk",
           "offers": {
             "@type": "Offer",
             "url": "<?php echo get_permalink($product->get_id()); ?>",
             "priceCurrency": "<?php echo get_woocommerce_currency(); ?>",
-            "price": "<?php echo $product->get_price(); ?>",
-            "availability": "https://schema.org/<?php echo $product->is_in_stock() ? 'InStock' : 'OutOfStock'; ?>"
+            "price": "<?php echo $clean_price; ?>",
+            "priceValidUntil": "2030-12-31",
+            "availability": "https://schema.org/<?php echo $product->is_in_stock() ? 'InStock' : 'OutOfStock'; ?>",
+            "itemCondition": "https://schema.org/NewCondition",
+            "shippingDetails": {
+              "@type": "OfferShippingDetails",
+              "shippingRate": {
+                "@type": "MonetaryAmount",
+                "value": "0",
+                "currency": "INR"
+              },
+              "deliveryTime": {
+                "@type": "ShippingDeliveryTime",
+                "handlingTime": {
+                  "@type": "QuantitativeValue",
+                  "minValue": 1,
+                  "maxValue": 2,
+                  "unitCode": "DAY"
+                },
+                "transitTime": {
+                  "@type": "QuantitativeValue",
+                  "minValue": 3,
+                  "maxValue": 5,
+                  "unitCode": "DAY"
+                }
+              },
+              "shippingDestination": {
+                "@type": "DefinedRegion",
+                "addressCountry": "IN"
+              }
+            },
+            "hasMerchantReturnPolicy": {
+              "@type": "MerchantReturnPolicy",
+              "applicableCountry": "IN",
+              "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
+              "merchantReturnDays": 7,
+              "returnMethod": "https://schema.org/ReturnByMail",
+              "returnFees": "https://schema.org/FreeReturn",
+              "merchantReturnLink": "https://thelibas.com/returns-policy"
+            }
           }
+          <?php if ( $rating_count > 0 ) { ?>,
+          "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "<?php echo $average; ?>",
+            "reviewCount": "<?php echo $product->get_review_count(); ?>"
+          }
+          <?php } ?>
         }
         </script>
         <?php
